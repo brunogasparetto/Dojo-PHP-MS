@@ -2,16 +2,18 @@
 
 /**
  * Resolução do exercício do 4 DOJO PHP-MS
- * Um OCR simples para a leitura de símbolos no formato
- *  _     _  _     _  _  _  _  _ 
- * | |  | _| _||_||_ |_   ||_||_|
- * |_|  ||_  _|  | _||_|  ||_|  |
+ * Um OCR simples
  *
  * @author Bruno Gasparetto
  */
 class Ocr {
 
     const SYMBOL_LENGTH = 3;
+    const SYMBOL_HEIGHT = 3;
+
+    const LINE_TOP    = 0;
+    const LINE_MIDDLE = 1;
+    const LINE_BOTTOM = 2;
 
     /**
      * Arquivo a ser interpretado
@@ -20,38 +22,56 @@ class Ocr {
     private $file;
 
     /**
-     * Parte superior do número
+     * As linhas que compõem os símbolos
      * @var array
      */
-    private $top = array();
-
-    /**
-     * Parte central do número
-     * @var array
-     */
-    private $middle = array();
-
-    /**
-     * Parte inferior do número
-     * @var array
-     */
-    private $bottom = array();
+    private $lines = array();
 
     /**
      * Nosso mapeamento entre números e símbolos
      * @var array
      */
     private $symbols = array(
-        0 => array(' _ ','| |','|_|'),
-        1 => array('   ','  |','  |'),
-        2 => array(' _ ',' _|','|_ '),
-        3 => array(' _ ',' _|',' _|'),
-        4 => array('   ','|_|','  |'),
-        5 => array(' _ ','|_ ',' _|'),
-        6 => array(' _ ','|_ ','|_|'),
-        7 => array(' _ ','  |','  |'),
-        8 => array(' _ ','|_|','|_|'),
-        9 => array(' _ ','|_|','  |')
+        0 => array(
+            ' _ ',
+            '| |',
+            '|_|'),
+        1 => array(
+            '   ',
+            '  |',
+            '  |'),
+        2 => array(
+            ' _ ',
+            ' _|',
+            '|_ '),
+        3 => array(
+            ' _ ',
+            ' _|',
+            ' _|'),
+        4 => array(
+            '   ',
+            '|_|',
+            '  |'),
+        5 => array(
+            ' _ ',
+            '|_ ',
+            ' _|'),
+        6 => array(
+            ' _ ',
+            '|_ ',
+            '|_|'),
+        7 => array(
+            ' _ ',
+            '  |',
+            '  |'),
+        8 => array(
+            ' _ ',
+            '|_|',
+            '|_|'),
+        9 => array(
+            ' _ ',
+            '|_|',
+            '  |')
     );
 
     /**
@@ -117,14 +137,14 @@ class Ocr {
      */
     private function readSymbol() {
 
-        if ( empty($this->top) ) {
+        if ( empty($this->lines[self::LINE_TOP]) ) {
             return NULL;
         }
 
         $symbol = array(
-            implode('', array_splice($this->top,    0, self::SYMBOL_LENGTH)),
-            implode('', array_splice($this->middle, 0, self::SYMBOL_LENGTH)),
-            implode('', array_splice($this->bottom, 0, self::SYMBOL_LENGTH)),
+            self::LINE_TOP    => implode('', array_splice($this->lines[self::LINE_TOP],    0, self::SYMBOL_LENGTH)),
+            self::LINE_MIDDLE => implode('', array_splice($this->lines[self::LINE_MIDDLE], 0, self::SYMBOL_LENGTH)),
+            self::LINE_BOTTOM => implode('', array_splice($this->lines[self::LINE_BOTTOM], 0, self::SYMBOL_LENGTH))
         );
 
         return $symbol;
@@ -154,9 +174,9 @@ class Ocr {
     private function readLine() {
         try {
             // Preferi trabalhar com array para facilitar usando array_splice
-            $this->top    = str_split($this->file->fgets(), 1);
-            $this->middle = str_split($this->file->fgets(), 1);
-            $this->bottom = str_split($this->file->fgets(), 1);
+            $this->lines[self::LINE_TOP]    = str_split($this->file->fgets(), 1);
+            $this->lines[self::LINE_MIDDLE] = str_split($this->file->fgets(), 1);
+            $this->lines[self::LINE_BOTTOM] = str_split($this->file->fgets(), 1);
         } catch ( Exception $e ) {
             return false;
         }
@@ -170,6 +190,6 @@ class Ocr {
      * @return bool
      */
     private function eof() {
-        return (empty($this->top) AND !$this->readLine());
+        return (!$this->readLine() AND empty($this->lines[self::LINE_TOP]));
     }
 }
