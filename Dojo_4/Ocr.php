@@ -11,10 +11,6 @@ class Ocr {
     const SYMBOL_LENGTH = 3;
     const SYMBOL_HEIGHT = 3;
 
-    const LINE_TOP    = 0;
-    const LINE_MIDDLE = 1;
-    const LINE_BOTTOM = 2;
-
     /**
      * Arquivo a ser interpretado
      * @var SplFileObject
@@ -87,13 +83,13 @@ class Ocr {
      * @return array
      */
     public function getNumbers() {
-        $result = array();
+        $numbers = array();
 
         while ( $number = $this->readNumber() ) {
-            $result[] = $number;
+            $numbers[] = $number;
         }
 
-        return $result;
+        return $numbers;
     }
 
     /**
@@ -137,15 +133,15 @@ class Ocr {
      */
     private function readSymbol() {
 
-        if ( empty($this->lines[self::LINE_TOP]) ) {
+        if ( $this->eol() ) {
             return NULL;
         }
 
-        $symbol = array(
-            self::LINE_TOP    => implode('', array_splice($this->lines[self::LINE_TOP],    0, self::SYMBOL_LENGTH)),
-            self::LINE_MIDDLE => implode('', array_splice($this->lines[self::LINE_MIDDLE], 0, self::SYMBOL_LENGTH)),
-            self::LINE_BOTTOM => implode('', array_splice($this->lines[self::LINE_BOTTOM], 0, self::SYMBOL_LENGTH))
-        );
+        $symbol = array();
+
+        for ( $i = 0; $i < self::SYMBOL_HEIGHT; ++$i ) {
+            $symbol[$i] = implode('', array_splice($this->lines[$i], 0, self::SYMBOL_LENGTH));
+        }
 
         return $symbol;
     }
@@ -173,10 +169,12 @@ class Ocr {
      */
     private function readLine() {
         try {
+            $this->lines = array();
+
+            for ( $i = 0; $i < self::SYMBOL_HEIGHT; ++$i ) {
             // Preferi trabalhar com array para facilitar usando array_splice
-            $this->lines[self::LINE_TOP]    = str_split($this->file->fgets(), 1);
-            $this->lines[self::LINE_MIDDLE] = str_split($this->file->fgets(), 1);
-            $this->lines[self::LINE_BOTTOM] = str_split($this->file->fgets(), 1);
+                $this->lines[$i] = str_split($this->file->fgets(), 1);
+            }
         } catch ( Exception $e ) {
             return false;
         }
@@ -190,6 +188,15 @@ class Ocr {
      * @return bool
      */
     private function eof() {
-        return (!$this->readLine() AND empty($this->lines[self::LINE_TOP]));
+        return (!$this->readLine() AND $this->eol());
+    }
+
+    /**
+     * Indica o fim da linha
+     *
+     * @return bool
+     */
+    private function eol() {
+        return empty($this->lines[self::SYMBOL_HEIGHT - 1]);
     }
 }
